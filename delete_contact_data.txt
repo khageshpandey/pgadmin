@@ -1,0 +1,84 @@
+/*
+N.B. ***** ONLY APPLIES TO LEGAL AND CORONERS CUSTOMERS *****
+script to delete test case data and contact data from schema 
+replace schema with actual schema name. e.g. set search_path to schema; -> set search_path to legalwolverhamptoncouncil;
+
+*** RUN THE TWO LINES BELOW PRIOR TO DATA MIGRATIONS ***
+after the script has been run in full run the two lines below to delete contacts:
+
+delete from regular_case_contacts;
+delete from subscribers where user_id not in (select user_id from regular_case_contacts) and channel_id = 'INTER0';
+*/
+
+set search_path to legalwolverhamptoncouncil;
+
+delete from application_links
+;
+delete from applications
+;
+delete from web_transactions
+;
+delete from parties
+;
+delete from subscriber_auth_methods
+;
+delete from subscribers
+where user_id not in (select user_id from regular_case_contacts) and channel_id = 'INTER0'
+;
+
+delete from application_advice
+;
+delete from linked_document_text
+;
+delete from linked_documents where security_id !=0
+;
+delete from parties
+;
+delete from key_indicators
+;
+delete from chart_data
+;
+delete from case_attributes
+;
+delete from case_sections
+;
+delete from web_transaction_parameters
+;
+
+delete from application_types
+where design_status in ('S','X')
+;
+delete from application_groups
+where design_status in ('S','X')
+;
+delete from application_decision_types where decision_type_id in (select decision_type_id from decision_types where date_removed is not null )
+;
+delete from appl_group_event_letters where decision_type_id in (select decision_type_id from decision_types where date_removed is not null)
+;
+delete from appl_group_event_tasks where decision_type_id in (select decision_type_id from decision_types where date_removed is not null)
+;
+delete from appl_group_event_letters where advice_type_id in (select id from application_advice_types where date_removed is not null)
+;
+delete from appl_group_event_tasks where task_type_id in (select id from application_advice_types where date_removed is not null)
+;
+delete from application_advice_types where date_removed is not null
+;
+delete from decision_types where date_removed is not null
+;
+delete from letter_templates where date_removed is not null
+;
+delete from appl_group_event_letters where template_id not in (select template_id from letter_templates)
+;
+update system_parameters set attribute_value = null where attribute_name = 'UIDPrefix'
+;
+update system_parameters set attribute_value = null where attribute_name = 'TestServer'
+;
+
+delete from system_parameters where attribute_name in ('TestEmailAddress','TestEmailDomain')
+;
+
+
+update system_parameters set attribute_value= null where attribute_name='SystemTimeOverride'
+;
+
+delete from customer_accounts ;

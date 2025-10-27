@@ -1,0 +1,278 @@
+POSTGRESQL - SELECT , UPDATE ,DELETE , INSERT
+             JOIN
+             GROUP BY
+             ORDER BY
+             HAVING
+             INDEXING
+
+ 
+
+MIN , MAX, AVG
+
+ 
+
+DATA TYPE: VARCHAR, INT, NUMBER,DATE ETC..
+
+ 
+
+CREATE
+DROP
+DROP CASCADE
+VIEWS
+
+
+
+---------------------------------------------------------
+-- View: torbaycrm.st_cases
+
+ 
+
+-- DROP VIEW torbaycrm.st_cases;
+
+ 
+
+CREATE OR REPLACE VIEW torbaycrm.st_cases
+AS
+SELECT applications.name AS type,
+    applications.display_label,
+    torbaycrm.decode(applications.group_name, NULL::character varying, applications.name, ((applications.name::text || ' - '::text) || applications.group_name::text)::character varying) AS subtype,
+    applications.application_type AS type_id,
+    applications.application_group_code AS subtype_id,
+    application_types.application_name AS form_type,
+    torbaycrm.decode(applications.application_group, 'C'::character varying, 'Data take on'::character varying, 'I'::character varying, 'Initial Application'::character varying, 'R'::character varying, 'Renewal'::character varying, 'F'::character varying, 'Fee Payment'::character varying, 'A'::character varying, 'Variation'::character varying, 'L'::character varying, 'Transfer'::character varying, 'P'::character varying, 'Transfer Location'::character varying, 'W'::character varying, 'Cancellation'::character varying, 'E'::character varying, 'Complaint'::character varying, 'U'::character varying, 'Other'::character varying, NULL::character varying) AS process_type,
+    applications.application_group_code AS process_id,
+    applications.statistical_code1,
+    applications.statistical_code2,
+    applications.statistical_code3,
+    applications.jurisdiction,
+    torbaycrm.decode(applications.application_group, 'C'::character varying, applications.application_id, 'I'::character varying, applications.application_id, applications.licence_id) AS registration_id,
+    torbaycrm.nvl(applications.complainant_id, applications.applicant_id) AS applicant_id,
+    applications.agent_id,
+    applications.application_date AS received_date,
+    applications.submitted_date AS submission_date,
+    applications.first_touch_time,
+    applications.last_touch_time,
+    applications.satisfaction_rating,
+    applications.created_by,
+    torbaycrm.nvl(applications.manual_channel, applications.web_location) AS origin,
+    o.name AS assigned_to,
+    o.channel_user_id AS assigned_to_id,
+    o.job_title AS assigned_to_job_title,
+    o.line_manager_user_id AS manager,
+    o.address AS assigned_to_address,
+    torbaycrm.decode(torbaycrm.nvl(o.decision_maker_type, 'I'::character varying), 'E'::character varying, 'Yes'::character varying, 'No'::character varying) AS assigned_to_external,
+    cd.name AS assigned_to_department,
+    cd.committee_id AS assigned_to_department_id,
+    jdbc.getassistant(applications.assigned_user_id) AS assistant,
+    applications.assigned_user_id AS assistant_id,
+    torbaycrm.nvl(applications.status_core, applications.status_desc) AS status,
+    applications.status_date AS status_changed_date,
+    applications.last_status_change,
+    applications.last_transaction_time,
+    torbaycrm.decode(applications.complexity_assessment, 'H'::character varying, 'High'::character varying, 'M'::character varying, 'Medium'::character varying, 'L'::character varying, 'Low'::character varying, NULL::character varying) AS rating,
+    torbaycrm.decode(torbaycrm.nvl(applications.confidential, 'N'::character varying), 'Y'::character varying, 'Yes'::character varying, 'No'::character varying) AS confidential,
+    applications.alternative_id AS external_id,
+    applications.date_withdrawn AS withdrawn_date,
+    applications.withdrawal_reason,
+    torbaycrm.decode(applications.status, 'A'::character varying, applications.status_date, NULL::timestamp without time zone) AS date_accepted,
+    torbaycrm.decode(applications.status, 'R'::character varying, applications.status_date, NULL::timestamp without time zone) AS date_returned,
+    applications.rejection_reason AS returned_reason,
+    torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, applications.appl_target_date, torbaycrm.decode(applications.next_stage, 'P'::character varying, applications.prov_target_date, 'D'::character varying, applications.dec_target_date, 'A'::character varying, applications.appeal_target_date, 'E'::character varying, applications.external_target_date, 'N'::character varying, applications.appl_target_date, NULL::date)) AS current_target_date,
+    torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, application_groups.appl_target_days, torbaycrm.decode(applications.next_stage, 'P'::character varying, application_groups.prov_target_days, 'D'::character varying, application_groups.dec_target_days, 'A'::character varying, application_groups.appeal_target_days, 'E'::character varying, application_groups.external_target_days, 'N'::character varying, application_groups.appl_target_days, NULL::numeric)) AS current_target_days,
+        CASE
+            WHEN upper(torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::character varying,
+            CASE
+                WHEN applications.external_decision_date IS NOT NULL THEN applications.external_decision_name
+                WHEN applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_name
+                WHEN applications.decision_date IS NOT NULL THEN applications.decision_name
+                WHEN applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_name
+                ELSE NULL::character varying
+            END)::text) = 'STAGE BYPASSED'::text THEN NULL::character varying
+            ELSE torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::character varying,
+            CASE
+                WHEN applications.external_decision_date IS NOT NULL THEN applications.external_decision_name
+                WHEN applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_name
+                WHEN applications.decision_date IS NOT NULL THEN applications.decision_name
+                WHEN applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_name
+                ELSE NULL::character varying
+            END)
+        END AS current_outcome,
+        CASE
+            WHEN upper(torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::character varying,
+            CASE
+                WHEN applications.external_decision_date IS NOT NULL THEN applications.external_decision_name
+                WHEN applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_name
+                WHEN applications.decision_date IS NOT NULL THEN applications.decision_name
+                WHEN applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_name
+                ELSE NULL::character varying
+            END)::text) = 'STAGE BYPASSED'::text THEN NULL::timestamp without time zone
+            ELSE torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, applications.date_closed,
+            CASE
+                WHEN applications.external_decision_date IS NOT NULL THEN applications.external_decision_date
+                WHEN applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_date
+                WHEN applications.decision_date IS NOT NULL THEN applications.decision_date
+                WHEN applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_date
+                ELSE NULL::timestamp without time zone
+            END)
+        END AS current_outcome_date,
+    torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::character varying,
+        CASE
+            WHEN applications.appeal_obj_received IS NOT NULL THEN torbaycrm.nvl(applications.stage4_label, application_groups.external_label)
+            WHEN applications.obj_received IS NOT NULL THEN torbaycrm.nvl(applications.stage3_label, application_groups.appeal_label)
+            WHEN applications.prov_obj_received IS NOT NULL THEN torbaycrm.nvl(applications.stage2_label, application_groups.dec_label)
+            WHEN applications.application_date IS NOT NULL THEN torbaycrm.nvl(applications.stage1_label, application_groups.prov_label)
+            ELSE NULL::character varying
+        END) AS current_stage,
+    torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::character varying,
+        CASE
+            WHEN applications.prov_obj_received IS NULL AND applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_name
+            WHEN applications.obj_received IS NULL AND applications.decision_date IS NOT NULL THEN applications.decision_name
+            WHEN applications.appeal_obj_received IS NULL AND applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_name
+            WHEN applications.appeal_obj_received IS NOT NULL AND applications.external_decision_date IS NOT NULL THEN applications.external_decision_name
+            ELSE NULL::character varying
+        END) AS current_stage_outcome,
+    torbaycrm.decode(application_groups.track_closure, 'Y'::character varying, NULL::timestamp without time zone,
+        CASE
+            WHEN applications.prov_obj_received IS NULL AND applications.prov_decision_date IS NOT NULL THEN applications.prov_decision_date
+            WHEN applications.obj_received IS NULL AND applications.decision_date IS NOT NULL THEN applications.decision_date
+            WHEN applications.appeal_obj_received IS NULL AND applications.appeal_decision_date IS NOT NULL THEN applications.appeal_decision_date
+            WHEN applications.appeal_obj_received IS NOT NULL AND applications.external_decision_date IS NOT NULL THEN applications.external_decision_date
+            ELSE NULL::timestamp without time zone
+        END) AS current_stage_outcome_date,
+    applications.appl_target_date AS closure_target_date,
+    application_groups.appl_target_days AS closure_target_days,
+    applications.date_closed AS closed_date,
+        CASE
+            WHEN applications.date_closed IS NULL OR applications.appl_target_date IS NULL THEN NULL::text
+            WHEN applications.appl_target_date >= applications.date_closed THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS closure_in_target,
+    torbaycrm.nvl(applications.stage1_label, application_groups.prov_label) AS stage1_label,
+    applications.prov_committee_id AS stage1_team_id,
+        CASE
+            WHEN applications.date_withdrawn IS NOT NULL OR applications.status::text = 'R'::text THEN NULL::date
+            ELSE applications.prov_target_date
+        END AS stage1_target_date,
+    application_groups.prov_target_days AS stage1_target_days,
+    applications.prov_decision_date AS stage1_response_date,
+        CASE
+            WHEN applications.prov_target_date IS NULL OR applications.prov_decision_date IS NULL THEN NULL::text
+            WHEN applications.prov_target_date >= applications.prov_decision_date THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS stage1_response_in_target,
+    applications.prov_decision_name AS stage1_outcome,
+    applications.prov_decision_details AS stage1_outcome_details,
+    applications.prov_decision_by AS stage1_outcome_by,
+        CASE
+            WHEN applications.prov_obj_received IS NOT NULL AND applications.prov_decision_date IS NOT NULL THEN 'Yes'::text
+            WHEN applications.prov_decision_date IS NOT NULL THEN 'No'::text
+            ELSE NULL::text
+        END AS stage1_escalated,
+    applications.prov_granted_from AS stage1_effective_from,
+    applications.prov_granted_until AS stage1_effective_until,
+    torbaycrm.nvl(applications.stage2_label, application_groups.dec_label) AS stage2_label,
+    applications.decision_committee_id AS stage2_team_id,
+    applications.prov_obj_received AS stage2_request_date,
+        CASE
+            WHEN applications.date_withdrawn IS NOT NULL OR applications.status::text = 'R'::text THEN NULL::date
+            ELSE applications.dec_target_date
+        END AS stage2_target_date,
+    application_groups.dec_target_days AS stage2_target_days,
+    applications.decision_date AS stage2_response_date,
+        CASE
+            WHEN applications.dec_target_date IS NULL OR applications.decision_date IS NULL THEN NULL::text
+            WHEN applications.dec_target_date >= applications.decision_date THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS stage2_response_in_target,
+    applications.decision_name AS stage2_outcome,
+    applications.decision_details AS stage2_outcome_details,
+    applications.decision_by AS stage2_outcome_by,
+        CASE
+            WHEN applications.obj_received IS NOT NULL AND applications.decision_date IS NOT NULL THEN 'Yes'::text
+            WHEN applications.decision_date IS NOT NULL THEN 'No'::text
+            ELSE NULL::text
+        END AS stage2_escalated,
+    applications.granted_from AS stage2_effective_from,
+    applications.granted_until AS stage2_effective_until,
+    torbaycrm.nvl(applications.stage3_label, application_groups.appeal_label) AS stage3_label,
+    applications.appeal_committee_id AS stage3_team_id,
+    applications.obj_received AS stage3_request_date,
+        CASE
+            WHEN applications.date_withdrawn IS NOT NULL OR applications.status::text = 'R'::text THEN NULL::date
+            ELSE applications.appeal_target_date
+        END AS stage3_target_date,
+    application_groups.appeal_target_days AS stage3_target_days,
+    applications.appeal_decision_date AS stage3_response_date,
+        CASE
+            WHEN applications.appeal_target_date IS NULL OR applications.appeal_decision_date IS NULL THEN NULL::text
+            WHEN applications.appeal_target_date >= applications.appeal_decision_date THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS stage3_response_in_target,
+    applications.appeal_decision_name AS stage3_outcome,
+    applications.appeal_decision_details AS stage3_outcome_details,
+    applications.appeal_decision_by AS stage3_outcome_by,
+        CASE
+            WHEN applications.appeal_obj_received IS NOT NULL AND applications.appeal_decision_date IS NOT NULL THEN 'Yes'::text
+            WHEN applications.appeal_decision_date IS NOT NULL THEN 'No'::text
+            ELSE NULL::text
+        END AS stage3_escalated,
+    applications.appeal_granted_from AS stage3_effective_from,
+    applications.appeal_granted_until AS stage3_effective_until,
+    torbaycrm.nvl(applications.stage4_label, application_groups.external_label) AS stage4_label,
+    applications.appeal_obj_received AS stage4_request_date,
+        CASE
+            WHEN applications.date_withdrawn IS NOT NULL OR applications.status::text = 'R'::text THEN NULL::date
+            ELSE applications.external_target_date
+        END AS stage4_target_date,
+    application_groups.external_target_days AS stage4_target_days,
+    applications.external_decision_date AS stage4_response_date,
+        CASE
+            WHEN applications.external_target_date IS NULL OR applications.external_decision_date IS NULL THEN NULL::text
+            WHEN applications.external_target_date >= applications.external_decision_date THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS stage4_response_in_target,
+    applications.external_decision_name AS stage4_outcome,
+    applications.external_decision_details AS stage4_outcome_details,
+    applications.external_decision_by AS stage4_outcome_by,
+    NULL::text AS stage4_escalated,
+    applications.external_granted_from AS stage4_effective_from,
+    applications.external_granted_until AS stage4_effective_until,
+    applications.service_id,
+    applications.service_tree_l1 AS service_category1,
+    applications.service_tree_l2 AS service_category2,
+    applications.service_tree_l3 AS service_category3,
+    applications.service_tree_l4 AS service_category4,
+    applications.service_tree_l5 AS service_category5,
+    applications.location_description,
+    applications.location_owner,
+    committees.name AS assigned_team,
+    committees.committee_id AS assigned_team_id,
+    committees.team_code AS assigned_team_code,
+    applications.security_id AS authority_id,
+    applications.related_application_id AS parent_id,
+    applications.application_id AS id,
+    COALESCE(applications.date_closed::date - applications.application_date::date, 'now'::text::date - applications.application_date::date) AS age,
+        CASE
+            WHEN applications.internal::text = 'Y'::text THEN 'No'::text
+            ELSE 'Yes'::text
+        END AS is_public,
+        CASE
+            WHEN application_groups.use_working_days::text = 'Y'::text THEN 'Yes'::text
+            ELSE 'No'::text
+        END AS targets_using_working_days,
+    applications.customer_account_id AS account_id,
+    applications.removal_date
+   FROM torbaycrm.applications
+     JOIN torbaycrm.application_groups ON application_groups.application_group_id::text = applications.application_group_id::text
+     JOIN torbaycrm.application_types ON application_types.application_type_code::text = applications.application_type_code::text
+     LEFT JOIN torbaycrm.committees ON committees.committee_id::text = applications.admin_team_id::text
+     LEFT JOIN (torbaycrm.decision_makers o
+     LEFT JOIN torbaycrm.committees cd ON o.department::text = cd.committee_id::text) ON o.decision_maker_id::text = applications.officer_dm_id::text
+  WHERE applications.date_removed IS NULL AND (applications.admin_team_id IS NOT NULL OR applications.related_application_id IS NULL) AND (application_groups.form_type::text = ANY (ARRAY['C'::character varying::text, 'E'::character varying::text]));
+
+ 
+
+ALTER TABLE torbaycrm.st_cases
+    OWNER TO postgres;
+
+ 

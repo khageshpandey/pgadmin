@@ -1,0 +1,2 @@
+select id, name, ip_access_restrictions from schemaname.web_channels where ip_access_restrictions is not null
+--update schemaname.web_channels set ip_access_restrictions = NULL where id = 'INTRA0' and ip_access_restrictions is not NULL

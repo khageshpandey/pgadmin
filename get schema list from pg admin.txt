@@ -1,0 +1,7 @@
+select 'set search_path to '''||pg_namespace.nspname||''';  XXXX'
+                             from pg_namespace, pg_user
+                          where pg_user.usesysid = pg_namespace.nspowner
+                          and pg_user.usename in ('nonstopgov', 'postgres')
+                          and pg_namespace.nspname not like 'pg_temp%'
+                          and pg_namespace.nspname not like 'pg_toast%'
+                          and pg_namespace.nspname not in ('public', 'jdbc', 'pg_catalog', 'information_schema');

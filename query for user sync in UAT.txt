@@ -1,0 +1,16 @@
+select * from beneden.decision_makers where name ilike '%musgrove%' order by name desc  --note decision_maker_id= 99999999
+select channel_user_id, date_removed, * from schema.decision_makers where name ilike '%musgrove%'  --note channel_user_id= XXXXXX and date left= YYYY-MM-DD
+
+
+update benenden.decision_makers set date_removed = NULL where channel_user_id = 'XXXX' and decision_maker_id= '99999'
+
+
+
+select * from benenden.decision_makers where name ilike '%musgrove%' order by name desc  --note decision_maker_id= 458902, 591715
+select channel_user_id, date_removed, * from benenden.decision_makers where name ilike '%musgrove%'  --note channel_user_id= XXXXXX and date left= 2016-08-20
+
+update benenden.decision_makers set date_removed = NULL where channel_user_id = 'xxxxx' and decision_maker_id= '9999'
+
+
+
+

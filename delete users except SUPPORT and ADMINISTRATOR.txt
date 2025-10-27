@@ -1,0 +1,9 @@
+--note this can cause issues with foreign keys.
+--check with Thomas before running
+
+set search_path to schema;
+
+delete from subscribers where user_id not in ('ADMINISTRATOR','EXT-ADMINISTRATOR','SUPPORT');
+
+delete from decision_makers where channel_user_id not in ('ADMINISTRATOR','EXT-ADMINISTRATOR','SUPPORT') or channel_user_id is null;
+

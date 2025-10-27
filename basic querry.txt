@@ -1,0 +1,3 @@
+pgAdmin query example
+
+select count(*) from legalsomersetconversion.applications
