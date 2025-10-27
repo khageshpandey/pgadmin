@@ -1,0 +1,37 @@
+[2:01 PM] Mike Hutchinson
+
+Script to delete unwanted AWS alarm notifications from Helpdesk schema in North Virginia:
+
+[2:01 PM] Mike Hutchinson
+
+--script to delete unwanted AWS email alerts from iCasework Helpdesk system (run Monday morning)
+
+--modify date range and date_removed as appropriate (date_removed is Monday's date)
+
+--set the first date to Friday's date and the second date to Tuesdays's date
+
+--modify type of alert as appropriate. E.g. TargetResponseTime, High-DB-Connections, High-Read-IOPS
+
+ 
+
+update helpdesk.applications set date_removed='2023-02-13' where display_label ilike '%TargetResponse%' 
+
+and status_core='Received from alarm@icasework.com' and application_date >= '2023-02-10' 
+
+and application_date <= '2023-02-14'
+
+ 
+
+update helpdesk.applications set date_removed='2023-02-13' where display_label ilike '%High-DB-Connections%' 
+
+and status_core='Received from alarm@icasework.com' and application_date >= '2023-02-10' 
+
+and application_date <= '2023-02-14'
+
+ 
+
+update helpdesk.applications set date_removed='2023-02-13' where display_label ilike '%High-Read-IOPS%' 
+
+and status_core='Received from alarm@icasework.com' and application_date >= '2023-02-10' 
+
+and application_date <= '2023-02-14'
